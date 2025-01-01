@@ -1,0 +1,86 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">AI Travel Guide</h1>
+        
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <form id="travelForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Destination</label>
+                    <input type="text" id="destination" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Duration (days)</label>
+                    <input type="number" id="duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Interests (comma-separated)</label>
+                    <input type="text" id="interests" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Get Recommendations
+                </button>
+            </form>
+        </div>
+        
+        <div id="resultsContainer" class="max-w-4xl mx-auto mt-8 bg-white rounded-lg shadow-md p-6 hidden">
+            <div id="placeInfo" class="mb-6"></div>
+            <div id="recommendations" class="prose"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('travelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const destination = document.getElementById('destination').value;
+            const duration = document.getElementById('duration').value;
+            const interests = document.getElementById('interests').value;
+            
+            try {
+                const response = await fetch('/get_recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ destination, duration, interests })
+                });
+                
+                const data = await response.json();
+                
+                // Display place info
+                const placeInfoDiv = document.getElementById('placeInfo');
+                if (data.place_info) {
+                    placeInfoDiv.innerHTML = `
+                        <h2 class="text-xl font-bold mb-2">${data.place_info.name}</h2>
+                        <p class="text-gray-600">${data.place_info.address}</p>
+                        <p class="text-gray-600">Rating: ${data.place_info.rating || 'N/A'}</p>
+                    `;
+                }
+                
+                // Display recommendations
+                const recommendationsDiv = document.getElementById('recommendations');
+                recommendationsDiv.innerHTML = `<div class="whitespace-pre-wrap">${data.recommendations}</div>`;
+                
+                // Show results container
+                document.getElementById('resultsContainer').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while fetching recommendations.');
+            }
+        });
+    </script>
+</body>
+</html>
